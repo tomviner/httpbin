@@ -16,6 +16,7 @@ Freely hosted in [HTTP](http://httpbin.org) &
 - [`/delete`](http://hurl.it/hurls/6faafea5191f77172fca4cfe1505739230d5f769/bc255ffc69e04c2c8b968822c59544746bbb872c) Returns DELETE data
 - [`/gzip`](http://httpbin.org/gzip) Returns gzip-encoded data.
 - [`/status/:code`](http://httpbin.org/status/418) Returns given HTTP Status code.
+- [`/response-headers?key=val`](http://httpbin.org/response-headers?Content-Type=text/plain;%20charset=UTF-8&Server=httpbin) eturns given response headers.
 - [`/redirect/:n`](http://httpbin.org/redirect/6) 302 Redirects *n* times.
 - [`/relative-redirect/:n`](http://httpbin.org/relative-redirect/6) 302 Relative redirects *n* times.
 - [`/cookies`](http://httpbin.org/cookies) Returns cookie data.
@@ -23,7 +24,8 @@ Freely hosted in [HTTP](http://httpbin.org) &
 - [`/basic-auth/:user/:passwd`](http://httpbin.org/basic-auth/user/passwd) Challenges HTTPBasic Auth.
 - [`/hidden-basic-auth/:user/:passwd`](http://httpbin.org/hidden-basic-auth/user/passwd) 404'd BasicAuth.
 - [`/digest-auth/:qop/:user/:passwd`](http://httpbin.org/digest-auth/auth/user/passwd) Challenges HTTP Digest Auth.
-- [`/stream/:n`](http://httpbin.org/stream/100) Streams *n* lines.
+- [`/stream/:n`](http://httpbin.org/stream/20) Streams *n*–100 lines.
+- [`/delay/:n`](/delay/3) Delays responding for *n*–10 seconds.
 
 
 ## DESCRIPTION
@@ -79,3 +81,4 @@ Project.
 ## SEE ALSO
 
 <http://python-requests.org>
+

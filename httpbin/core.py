@@ -17,8 +17,8 @@ from werkzeug.datastructures import WWWAuthenticate
 
 from . import filters
 from .helpers import get_headers, status_code, get_dict, check_basic_auth, check_digest_auth, H
+from .utils import weighted_choice
 from .structures import CaseInsensitiveDict
-
 
 ENV_COOKIES = (
     '_gauges_unique',
@@ -41,6 +41,7 @@ app = Flask(__name__)
 @app.errorhandler(500)
 def page_not_found(e):
     return ':(', 200
+
 
 @app.route('/')
 def view_landing_page():
@@ -79,9 +80,7 @@ def view_get():
     return jsonify(get_dict('url', 'args', 'headers', 'origin'))
 
 
-
 @app.route('/post', methods=('POST',))
-
 def view_post():
     """Returns POST Data."""
 
@@ -103,7 +102,6 @@ def view_patch():
 
     return jsonify(get_dict(
         'url', 'args', 'form', 'data', 'origin', 'headers', 'files'))
-
 
 
 @app.route('/delete', methods=('DELETE',))
@@ -131,7 +129,7 @@ def redirect_n_times(n):
     if (n == 1):
         return redirect('/get')
 
-    return redirect('/redirect/{0}'.format(n-1))
+    return redirect('/redirect/{0}'.format(n - 1))
 
 
 @app.route('/relative-redirect/<int:n>')
@@ -147,7 +145,7 @@ def relative_redirect_n_times(n):
         response.headers['Location'] = '/get'
         return response
 
-    response.headers['Location'] = '/relative-redirect/{0}'.format(n-1)
+    response.headers['Location'] = '/relative-redirect/{0}'.format(n - 1)
     return response
 
 
@@ -155,11 +153,12 @@ def relative_redirect_n_times(n):
 def stream_n_messages(n):
     """Stream n JSON messages"""
     response = get_dict('url', 'args', 'headers', 'origin')
+    n = min(n, 100)
 
     def generate_stream():
         for i in range(n):
-            response["id"] = i
-            yield json.dumps(response) + "\n"
+            response['id'] = i
+            yield json.dumps(response) + '\n'
 
     return Response(generate_stream(), headers={
         "Transfer-Encoding": "chunked",
@@ -167,18 +166,35 @@ def stream_n_messages(n):
         })
 
 
-@app.route('/status/<int:code>')
-def view_status_code(code):
-    """Returns given status code."""
+@app.route('/status/<codes>')
+def view_status_code(codes):
+    """Return status code or random status code if more than one are given"""
+
+    if not ',' in codes:
+        code = int(codes)
+        return status_code(code)
+
+    choices = []
+    for choice in codes.split(','):
+        if not ':' in choice:
+            code = choice
+            weight = 1
+        else:
+            code, weight = choice.split(':')
+
+        choices.append((int(code), float(weight)))
+
+    code = weighted_choice(choices)
 
     return status_code(code)
 
 
 @app.route('/response-headers')
 def response_headers():
-    """ Returns a set of response headers from the query string """
+    """Returns a set of response headers from the query string """
     headers = CaseInsensitiveDict(request.args.items())
     response = jsonify(headers.items())
+
     while True:
         content_len_shown = response.headers['Content-Length']
         response = jsonify(response.headers.items())
@@ -231,7 +247,7 @@ def hidden_basic_auth(user='user', passwd='passwd'):
 
     if not check_basic_auth(user, passwd):
         return status_code(404)
-    return dict(authenticated=True, user=user)
+    return jsonify(authenticated=True, user=user)
 
 
 @app.route('/digest-auth/<qop>/<user>/<passwd>')
@@ -255,7 +271,18 @@ def digest_auth(qop=None, user='user', passwd='passwd'):
         return response
     elif not check_digest_auth(user, passwd):
         return status_code(403)
-    return dict(authenticated=True, user=user)
+    return jsonify(authenticated=True, user=user)
+
+
+@app.route('/delay/<int:delay>')
+def delay_response(delay):
+    """Returns a delayed response"""
+    delay = min(delay, 10)
+
+    time.sleep(delay)
+
+    return jsonify(get_dict(
+        'url', 'args', 'form', 'data', 'origin', 'headers', 'files'))
 
 
 @app.route('/base64/<value>')
